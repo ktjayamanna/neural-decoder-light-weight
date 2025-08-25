@@ -2,8 +2,10 @@ data/*
 data/single_rnn_output.pkl
 
 # Build directories
-runtime/server/x86/build/
-runtime/server/x86/fc_base/
+**/runtime/server/x86/build/
+**/runtime/server/x86/fc_base/
+LanguageModelDecoder/runtime/server/x86/build/
+LanguageModelDecoder/runtime/server/x86/fc_base/
 
 # Compiled Python modules
 *.so
@@ -38,9 +40,12 @@ fsttablecompose
 fstdeterminizestar
 
 # Downloaded dependencies (these get fetched automatically)
-runtime/server/x86/fc_base/*-src/
-runtime/server/x86/fc_base/*-build/
-runtime/server/x86/fc_base/*-subbuild/
+**/runtime/server/x86/fc_base/*-src/
+**/runtime/server/x86/fc_base/*-build/
+**/runtime/server/x86/fc_base/*-subbuild/
+LanguageModelDecoder/runtime/server/x86/fc_base/*-src/
+LanguageModelDecoder/runtime/server/x86/fc_base/*-build/
+LanguageModelDecoder/runtime/server/x86/fc_base/*-subbuild/
 
 # CMake generated files
 *-prefix/

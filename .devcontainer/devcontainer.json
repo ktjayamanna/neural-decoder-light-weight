@@ -1,0 +1,96 @@
+{
+    "name": "speechBCI Language Model Decoder Dev Environment",
+    "build": {
+        "dockerfile": "../Dockerfile.dev",
+        "context": ".."
+    },
+    
+    // Configure tool-specific properties
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // Augment Code extension
+                "augmentcode.augment",
+                
+                // C++ development
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-vscode.cmake-tools",
+                
+                // Python development
+                "ms-python.python",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                
+                // General development
+                "ms-vscode.vscode-json",
+                "redhat.vscode-yaml",
+                "ms-vscode.hexeditor",
+                "eamodio.gitlens",
+                "ms-vscode.vscode-typescript-next",
+                
+                // Docker
+                "ms-azuretools.vscode-docker",
+                
+                // Useful utilities
+                "streetsidesoftware.code-spell-checker",
+                "ms-vscode.vscode-json",
+                "ms-vscode.remote-containers"
+            ],
+            
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "python.defaultInterpreterPath": "/usr/bin/python3",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.formatting.provider": "black",
+                "C_Cpp.default.cppStandard": "c++14",
+                "C_Cpp.default.cStandard": "c11",
+                "cmake.configureOnOpen": false,
+                "files.associations": {
+                    "*.h": "cpp",
+                    "*.cc": "cpp",
+                    "*.cpp": "cpp"
+                }
+            }
+        }
+    },
+    
+    // Use 'forwardPorts' to make a list of ports inside the container available locally
+    "forwardPorts": [8080, 3000, 5000],
+    
+    // Use 'postCreateCommand' to run commands after the container is created
+    "postCreateCommand": "chmod 600 ~/.ssh/* 2>/dev/null || true && echo 'Welcome to speechBCI dev environment' && python3 --version && cmake --version && g++ --version && git --version",
+    
+    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root
+    "remoteUser": "developer",
+    
+    // Mount the workspace
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "workspaceFolder": "/workspace",
+    
+    // Features to add to the dev container
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+
+    // Mount git config and SSH keys from host
+    "mounts": [
+        "source=${localEnv:HOME}/.gitconfig,target=/home/developer/.gitconfig,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.ssh,target=/home/developer/.ssh,type=bind,consistency=cached"
+    ],
+    
+    // Configure container runtime options
+    "runArgs": [
+        "--cap-add=SYS_PTRACE",
+        "--security-opt", "seccomp=unconfined"
+    ],
+    
+    // Environment variables
+    "containerEnv": {
+        "WORKSPACE": "/workspace",
+        "PYTHONPATH": "/workspace",
+        "CMAKE_BUILD_TYPE": "Debug"
+    }
+}
