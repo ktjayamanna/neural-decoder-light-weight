@@ -22,7 +22,7 @@ make -j8 MAKE_PIC=yes World && make -j8 cleanest
 ```bash
 cd runtime/server/x86
 mkdir build && cd build
-cmake ..
+cmake .
 make -j8
 ```
 
