@@ -10,7 +10,8 @@
         "vscode": {
             "extensions": [
                 // Augment Code extension
-                "augmentcode.augment",
+                "augment.vscode-augment",
+                
                 
                 // C++ development
                 "ms-vscode.cpptools",
