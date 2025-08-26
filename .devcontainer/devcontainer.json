@@ -26,7 +26,6 @@
                 "ms-vscode.vscode-json",
                 "redhat.vscode-yaml",
                 "ms-vscode.hexeditor",
-                "eamodio.gitlens",
                 "ms-vscode.vscode-typescript-next",
                 
                 // Docker
