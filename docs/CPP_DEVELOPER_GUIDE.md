@@ -15,11 +15,11 @@ struct DecodeResource {
 // AFTER: Multiple FSTs + new constructor
 struct DecodeResource {
   std::shared_ptr<fst::Fst<fst::StdArc>> fst = nullptr;      // Traditional TLG.fst
-  std::shared_ptr<fst::Fst<fst::StdArc>> tl_fst = nullptr;   // NEW: TL FST
-  std::shared_ptr<fst::Fst<fst::StdArc>> g_fst = nullptr;    // NEW: G FST
+  std::shared_ptr<fst::Fst<fst::StdArc>> tl_fst = nullptr;   // NEW: T FST (small)
+  std::shared_ptr<fst::Fst<fst::StdArc>> g_fst = nullptr;    // NEW: LG FST (medium)
 
   // NEW: 6-parameter constructor for lazy composition
-  DecodeResource(const string &tl_fst_path, const string &g_fst_path, ...);
+  DecodeResource(const string &t_fst_path, const string &lg_fst_path, ...);
 };
 ```
 
@@ -80,16 +80,16 @@ decoder_->AdvanceDecoding(&decodable_, 1);
 ### Command-Line Interface
 ```cpp
 // NEW flags
-DEFINE_string(tl_fst_path, "", "TL fst path for lazy composition");
-DEFINE_string(g_fst_path, "", "G fst path for lazy composition");
+DEFINE_string(tl_fst_path, "", "T fst path for lazy composition");
+DEFINE_string(g_fst_path, "", "LG fst path for lazy composition");
 
 // NEW resource creation logic
 if (!FLAGS_tl_fst_path.empty() && !FLAGS_g_fst_path.empty()) {
   decode_resource = std::make_shared<wenet::DecodeResource>(
-      FLAGS_tl_fst_path, FLAGS_g_fst_path, ...);  // Lazy composition
+      FLAGS_tl_fst_path, FLAGS_g_fst_path, ...);  // T.fst + LG.fst
 } else {
   decode_resource = std::make_shared<wenet::DecodeResource>(
-      FLAGS_fst_path, ...);                       // Traditional
+      FLAGS_fst_path, ...);                       // Traditional TLG.fst
 }
 ```
 
@@ -109,6 +109,6 @@ auto resource = std::make_shared<DecodeResource>(tlg_path, "", "", dict_path, ""
 - Access composed FST through `composed_fst_` when in lazy mode
 
 ## Memory Impact
-- **Traditional**: Loads 20-30GB TLG.fst immediately
-- **Lazy Composition**: Loads TL.fst (~100MB) + G.fst (~5-10GB), composes on-demand
-- **Result**: 50-70% memory reduction
+- **Traditional**: Loads 27GB TLG.fst immediately
+- **Lazy Composition**: Loads T.fst (~38K) + LG.fst (~8.8GB), composes on-demand
+- **Result**: ~18GB memory reduction (67% savings)

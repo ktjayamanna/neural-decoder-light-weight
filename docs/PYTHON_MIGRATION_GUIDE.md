@@ -27,8 +27,8 @@ decode_resource = lm_decoder.DecodeResource(
 ```python
 # 6 parameters - uses 50-70% less memory
 decode_resource = lm_decoder.DecodeResource(
-    "/path/to/TL.fst",      # Small file (~100MB)
-    "/path/to/G.fst",       # Medium file (~5-10GB)
+    "/path/to/T.fst",       # Small file (~38K)
+    "/path/to/LG.fst",      # Medium file (~8.8GB)
     "", "", "/path/to/words.txt", ""
 )
 ```
@@ -48,10 +48,7 @@ lm_decoder.DecodeNumpy(decoder, log_priors, logits, 1.0)
 ## Migration Steps
 
 1. **Your existing code still works** - no changes required
-2. **To use lazy composition**: Create TL.fst from separate files:
-   ```bash
-   ./scripts/bash_scripts/precompose_tl.sh /path/to/model/directory
-   ```
+2. **To use lazy composition**: Use existing T.fst and LG.fst files (no preparation needed)
 3. **Update constructor** to 6 parameters for memory savings
 
 ## Common Issues
@@ -59,10 +56,10 @@ lm_decoder.DecodeNumpy(decoder, log_priors, logits, 1.0)
 ### Wrong Parameter Count
 ```python
 # ERROR
-decode_resource = lm_decoder.DecodeResource(tl_path, g_path, dict_path)
+decode_resource = lm_decoder.DecodeResource(t_path, lg_path, dict_path)
 
 # CORRECT - always use all parameters
-decode_resource = lm_decoder.DecodeResource(tl_path, g_path, "", "", dict_path, "")
+decode_resource = lm_decoder.DecodeResource(t_path, lg_path, "", "", dict_path, "")
 ```
 
 ### DecodeNumpy Arguments
