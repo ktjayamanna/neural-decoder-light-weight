@@ -20,7 +20,12 @@ BrainSpeechDecoder::BrainSpeechDecoder(
       rescore_lm_fst_(resource->rescore_lm_fst),
       unit_table_(resource->unit_table),
       opts_(opts) {
-  if (nullptr == fst_) {
+
+  if (resource->tl_fst != nullptr && resource->g_fst != nullptr) {
+    LOG(INFO) << "Using lazy composition with separate TL and G FSTs";
+    searcher_.reset(new CtcWfstBeamSearch(*resource->tl_fst, *resource->g_fst, opts->ctc_wfst_search_opts));
+    acoustic_scale_ = opts->ctc_wfst_search_opts.acoustic_scale;
+  } else if (nullptr == fst_) {
     searcher_.reset(new CtcPrefixBeamSearch(opts_->ctc_prefix_search_opts));
   } else {
     searcher_.reset(new CtcWfstBeamSearch(*fst_, opts->ctc_wfst_search_opts));

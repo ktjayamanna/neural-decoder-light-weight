@@ -41,7 +41,12 @@ PYBIND11_MODULE(lm_decoder, m) {
         .def(py::init<int, int, float, float, float, float, float, int>());
 
     py::class_<DecodeResource, std::shared_ptr<DecodeResource> >(m, "DecodeResource")
-        .def(py::init<const std::string &, const std::string &, const std::string &, const std::string &, const std::string &>());
+        .def(py::init<const std::string &, const std::string &, const std::string &, const std::string &, const std::string &>(),
+             py::arg("fst_path"), py::arg("lm_fst_path"), py::arg("rescore_lm_fst_path"),
+             py::arg("dict_path"), py::arg("unit_path"))
+        .def(py::init<const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &>(),
+             py::arg("tl_fst_path"), py::arg("g_fst_path"), py::arg("lm_fst_path"),
+             py::arg("rescore_lm_fst_path"), py::arg("dict_path"), py::arg("unit_path"));
 
     py::class_<DecodeResult>(m, "DecodeResult")
         .def_readonly("ac_score", &DecodeResult::ac_score)

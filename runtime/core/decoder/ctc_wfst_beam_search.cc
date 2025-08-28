@@ -44,7 +44,18 @@ int32 DecodableTensorScaled::NumIndices() const {
 
 CtcWfstBeamSearch::CtcWfstBeamSearch(const fst::Fst<fst::StdArc>& fst,
                                      CtcWfstBeamSearchOptions& opts)
-    : decodable_(opts.acoustic_scale), decoder_(fst, opts), opts_(opts) {
+    : decodable_(opts.acoustic_scale), opts_(opts), use_lazy_composition_(false) {
+  decoder_.reset(new kaldi::LatticeFasterOnlineDecoder(fst, opts));
+  Reset();
+}
+
+CtcWfstBeamSearch::CtcWfstBeamSearch(const fst::Fst<fst::StdArc>& tl_fst,
+                                     const fst::Fst<fst::StdArc>& g_fst,
+                                     CtcWfstBeamSearchOptions& opts)
+    : decodable_(opts.acoustic_scale), opts_(opts), use_lazy_composition_(true) {
+  LOG(INFO) << "Creating lazy composition TL ∘ G";
+  composed_fst_.reset(new fst::ComposeFst<fst::StdArc>(tl_fst, g_fst));
+  decoder_.reset(new kaldi::LatticeFasterOnlineDecoder(*composed_fst_, opts));
   Reset();
 }
 
@@ -58,7 +69,7 @@ void CtcWfstBeamSearch::Reset() {
   likelihood_.clear();
   times_.clear();
   decodable_.Reset();
-  decoder_.InitDecoding();
+  decoder_->InitDecoding();
   lat_.DeleteStates();
 }
 
@@ -88,14 +99,14 @@ void CtcWfstBeamSearch::Search(const torch::Tensor& logp) {
       // symbols
       if (cur_best != 0 && is_last_frame_blank_ && cur_best == last_best_) {
         decodable_.AcceptLoglikes(last_frame_prob_);
-        decoder_.AdvanceDecoding(&decodable_, 1);
+        decoder_->AdvanceDecoding(&decodable_, 1);
         decoded_frames_mapping_.push_back(num_frames_ - 1);
         VLOG(2) << "Adding blank frame at symbol " << cur_best;
       }
       last_best_ = cur_best;
 
       decodable_.AcceptLoglikes(logp[i]);
-      decoder_.AdvanceDecoding(&decodable_, 1);
+      decoder_->AdvanceDecoding(&decodable_, 1);
       decoded_frames_mapping_.push_back(num_frames_);
       is_last_frame_blank_ = false;
     }
@@ -110,7 +121,7 @@ void CtcWfstBeamSearch::Search(const torch::Tensor& logp) {
     outputs_.resize(1);
     likelihood_.resize(1);
     kaldi::Lattice lat;
-    decoder_.GetBestPath(&lat, false);
+    decoder_->GetBestPath(&lat, false);
     std::vector<int> alignment;
     kaldi::LatticeWeight weight;
     fst::GetLinearSymbolSequence(lat, &alignment, &outputs_[0], &weight);
@@ -122,7 +133,7 @@ void CtcWfstBeamSearch::Search(const torch::Tensor& logp) {
 
 void CtcWfstBeamSearch::FinalizeSearch() {
   decodable_.SetFinish();
-  decoder_.FinalizeDecoding();
+  decoder_->FinalizeDecoding();
   inputs_.clear();
   outputs_.clear();
   likelihood_.clear();
@@ -131,12 +142,12 @@ void CtcWfstBeamSearch::FinalizeSearch() {
     std::vector<kaldi::Lattice> nbest_lats;
     if (opts_.nbest == 1) {
       kaldi::Lattice lat;
-      decoder_.GetBestPath(&lat, true);
+      decoder_->GetBestPath(&lat, true);
       nbest_lats.push_back(std::move(lat));
     } else {
       // Get N-best path by lattice(CompactLattice)
       kaldi::CompactLattice clat;
-      decoder_.GetLattice(&clat, true);
+      decoder_->GetLattice(&clat, true);
       kaldi::Lattice nbest_lat;
       fst::ConvertLattice(clat, &lat_);
       // TODO(Binbin Zhang): it's n-best word lists here, not character n-best

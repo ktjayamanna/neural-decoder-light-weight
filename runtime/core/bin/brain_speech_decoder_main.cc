@@ -28,8 +28,9 @@ DEFINE_double(blank_skip_thresh, 1.0,
               "blank skip thresh for ctc wfst search, 1.0 means no skip");
 DEFINE_int32(nbest, 10, "nbest for ctc wfst search");
 
-// TLG fst
 DEFINE_string(fst_path, "", "TLG fst path");
+DEFINE_string(tl_fst_path, "", "TL fst path for lazy composition");
+DEFINE_string(g_fst_path, "", "G fst path for lazy composition");
 DEFINE_string(lm_fst_path, "", "LM fst path");
 DEFINE_string(rescore_lm_fst_path, "", "Rescore lm fst path");
 
@@ -55,11 +56,22 @@ int main(int argc, char *argv[]) {
                                                               FLAGS_blank_skip_thresh,
                                                               0,  // Length penalty
                                                               FLAGS_nbest);
-  auto decode_resource = std::make_shared<wenet::DecodeResource>(FLAGS_fst_path,
-                                                                 FLAGS_lm_fst_path,
-                                                                 FLAGS_rescore_lm_fst_path,
-                                                                 FLAGS_dict_path,
-                                                                 FLAGS_unit_path);
+  std::shared_ptr<wenet::DecodeResource> decode_resource;
+
+  if (!FLAGS_tl_fst_path.empty() && !FLAGS_g_fst_path.empty()) {
+    decode_resource = std::make_shared<wenet::DecodeResource>(FLAGS_tl_fst_path,
+                                                              FLAGS_g_fst_path,
+                                                              FLAGS_lm_fst_path,
+                                                              FLAGS_rescore_lm_fst_path,
+                                                              FLAGS_dict_path,
+                                                              FLAGS_unit_path);
+  } else {
+    decode_resource = std::make_shared<wenet::DecodeResource>(FLAGS_fst_path,
+                                                              FLAGS_lm_fst_path,
+                                                              FLAGS_rescore_lm_fst_path,
+                                                              FLAGS_dict_path,
+                                                              FLAGS_unit_path);
+  }
 
   if (FLAGS_data_path.empty()) {
     LOG(FATAL) << "data path is empty";

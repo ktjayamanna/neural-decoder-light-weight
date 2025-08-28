@@ -57,6 +57,10 @@ class CtcWfstBeamSearch : public SearchInterface {
  public:
   explicit CtcWfstBeamSearch(const fst::Fst<fst::StdArc>& fst,
                              CtcWfstBeamSearchOptions& opts);
+
+  CtcWfstBeamSearch(const fst::Fst<fst::StdArc>& tl_fst,
+                    const fst::Fst<fst::StdArc>& g_fst,
+                    CtcWfstBeamSearchOptions& opts);
   void SetOpt(CtcWfstBeamSearchOptions& opts);
   void Search(const torch::Tensor& logp) override;
   void Reset() override;
@@ -89,9 +93,12 @@ class CtcWfstBeamSearch : public SearchInterface {
   std::vector<std::pair<float, float> > likelihood_;
   std::vector<std::vector<int>> times_;
   DecodableTensorScaled decodable_;
-  kaldi::LatticeFasterOnlineDecoder decoder_;
+  std::unique_ptr<kaldi::LatticeFasterOnlineDecoder> decoder_;
   CtcWfstBeamSearchOptions& opts_;
   kaldi::Lattice lat_;
+
+  std::unique_ptr<fst::ComposeFst<fst::StdArc>> composed_fst_;
+  bool use_lazy_composition_ = false;
 };
 
 }  // namespace wenet

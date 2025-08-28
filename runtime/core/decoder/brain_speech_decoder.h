@@ -91,8 +91,65 @@ struct DecodeResource {
     }
   }
 
+  DecodeResource(const string &tl_fst_path,
+                 const string &g_fst_path,
+                 const string &lm_fst_path,
+                 const string &rescore_lm_fst_path,
+                 const string &dict_path,
+                 const string &unit_path) {
+    if (!tl_fst_path.empty()) {
+      LOG(INFO) << "Reading TL fst " << tl_fst_path;
+      tl_fst.reset(fst::Fst<fst::StdArc>::Read(tl_fst_path));
+      CHECK(tl_fst != nullptr);
+    }
+
+    if (!g_fst_path.empty()) {
+      LOG(INFO) << "Reading G fst " << g_fst_path;
+      g_fst.reset(fst::Fst<fst::StdArc>::Read(g_fst_path));
+      CHECK(g_fst != nullptr);
+    }
+
+
+    if (!lm_fst_path.empty()) {
+      LOG(INFO) << "Reading lm fst " << lm_fst_path;
+      auto std_lm_fst = fst::ReadAndPrepareLmFst(lm_fst_path);
+
+      int32 num_states_cache = 50000;
+      fst::CacheOptions cache_opts(true, num_states_cache);
+      fst::MapFstOptions mapfst_opts(cache_opts);
+      fst::StdToLatticeMapper<kaldi::BaseFloat> mapper;
+      original_lm_fst.reset(new LMFst(*std_lm_fst, mapper, mapfst_opts));
+      delete std_lm_fst;
+    }
+
+    if (!rescore_lm_fst_path.empty()) {
+      LOG(INFO) << "Reading rescore fst " << rescore_lm_fst_path;
+      auto std_lm_fst = fst::ReadAndPrepareLmFst(rescore_lm_fst_path);
+
+      int32 num_states_cache = 50000;
+      fst::CacheOptions cache_opts(true, num_states_cache);
+      fst::MapFstOptions mapfst_opts(cache_opts);
+      fst::StdToLatticeMapper<kaldi::BaseFloat> mapper;
+      rescore_lm_fst.reset(new LMFst(*std_lm_fst, mapper, mapfst_opts));
+      delete std_lm_fst;
+    }
+
+    LOG(INFO) << "Reading symbol table " << dict_path;
+    symbol_table.reset(fst::SymbolTable::ReadText(dict_path));
+
+    if (!unit_path.empty()) {
+      unit_table.reset(fst::SymbolTable::ReadText(unit_path));
+      CHECK(unit_table != nullptr);
+    } else if (tl_fst == nullptr && fst == nullptr) {
+      LOG(INFO) << "Use symbol table as unit table";
+      unit_table = symbol_table;
+    }
+  }
+
   std::shared_ptr<fst::SymbolTable> symbol_table = nullptr;
   std::shared_ptr<fst::Fst<fst::StdArc>> fst = nullptr;
+  std::shared_ptr<fst::Fst<fst::StdArc>> tl_fst = nullptr;
+  std::shared_ptr<fst::Fst<fst::StdArc>> g_fst = nullptr;
   std::shared_ptr<fst::SymbolTable> unit_table = nullptr;
   std::shared_ptr<LMFst> rescore_lm_fst = nullptr;
   std::shared_ptr<LMFst> original_lm_fst = nullptr;
